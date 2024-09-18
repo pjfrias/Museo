@@ -6,7 +6,7 @@ const translate = require('node-google-translate-skidz');
 const app = express();
 
 // Puerto en el que el servidor va a escuchar
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware para servir archivos estáticos (como CSS, JS y imágenes)
 app.use(express.static(path.join(__dirname, '/public/')));

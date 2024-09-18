@@ -1,14 +1,14 @@
 const url = 'https://collectionapi.metmuseum.org/public/collection/v1';
-const maxElementos = 400; // Limite de elementos
+const maxElementos = 400; // Límite de elementos
 const elementosPorPagina = 20; // Elementos por página
 let paginaActual = 1;
 let departamentos = [];
 let Departamento = ''; // Variable para almacenar el departamento seleccionado
 let todosIdsObjetos = []; // Variable global para almacenar todos los IDs de objetos
+let idsPorPagina = {}; // Variable global para almacenar IDs asignados a cada página
 
 // Función para traducir texto al español llamando al servidor
 const traducirTexto = async (texto) => {
-    // Si el texto es nulo o vacío, devolver el texto original
     if (!texto || typeof texto !== 'string') {
         return texto || ''; // Devuelve el texto original o una cadena vacía
     }
@@ -26,39 +26,65 @@ const traducirTexto = async (texto) => {
     }
 };
 
+// Inicializar la carga de departamentos al cargar la página
+document.addEventListener('DOMContentLoaded', () => {
+    cargarDepartamentos();
+
+    // Configurar el botón de búsqueda
+    const btnBuscar = document.getElementById('buscar');
+    btnBuscar.addEventListener('click', () => {
+        paginaActual = 1;
+        mostrarLoader(); // Mostrar la animación de carga
+        buscarObjetos();
+    });
+
+    // Agregar event listener para detectar la tecla "Enter"
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+            // Simular un clic en el botón de búsqueda
+            btnBuscar.click();
+        }
+    });
+});
+
+// Mostrar el loader
+const mostrarLoader = () => {
+    const loader = document.getElementById('loader');
+    loader.style.display = 'block';
+};
+
+// Ocultar el loader
+const ocultarLoader = () => {
+    const loader = document.getElementById('loader');
+    loader.style.display = 'none';
+};
+
 // Función para cargar los departamentos disponibles en el <select>
 const cargarDepartamentos = () => {
     fetch(`${url}/departments`)
         .then(response => response.json())
         .then(datos => {
-            departamentos = datos.departments; // Guardar en el array departamentos
+            departamentos = datos.departments;
             const selectDepartamento = document.getElementById('departamento');
-            // Limpiar el select
             selectDepartamento.innerHTML = '';
 
-            // Agregar las opciones de departamentos
             departamentos.forEach(departamento => {
                 const opcion = document.createElement('option');
-                opcion.value = departamento.departmentId; // Usar el id del departamento
+                opcion.value = departamento.departmentId;
                 opcion.textContent = departamento.displayName;
                 selectDepartamento.appendChild(opcion);
             });
 
-            // Configurar el evento para cambiar el departamento seleccionado
             selectDepartamento.addEventListener('change', (event) => {
-                Departamento = event.target.value; // Guardar el ID del departamento seleccionado
-                paginaActual = 1; // Reiniciar la página actual
-                buscarObjetos(); // Realizar la búsqueda con el nuevo departamento
+                Departamento = event.target.value;
+                paginaActual = 1;
+                idsPorPagina = {}; // Resetear al cambiar de departamento
+                mostrarLoader(); // Mostrar la animación de carga al cambiar de departamento
+                buscarObjetos();
             });
         })
         .catch(error => {
-            if (error.name === 'AbortError') {
-                console.log('Solicitud abortada');
-            } else if (error.message.includes('429')) {
-                console.log('Límite de peticiones excedido, por favor espera.');
-            } else {
-                console.error('Error en la solicitud:', error.message);
-            }
+            console.error('Error en la solicitud:', error.message);
         });
 };
 
@@ -83,103 +109,104 @@ const buscarObjetos = () => {
         .then(datos => {
             // Guardar todos los IDs de objetos en memoria
             todosIdsObjetos = (datos.objectIDs || []).filter(id => id).slice(0, maxElementos);
-
-            // Realizar el fetch de los objetos para la página actual
-            cargarObjetosPorPagina();
+            filtrarYAsignarObjetosAPaginas(); // Filtrar y asignar los objetos a las páginas
         })
         .catch(error => {
-            if (error.name === 'AbortError') {
-                console.log('Solicitud abortada');
-            } else if (error.message.includes('429')) {
-                console.log('Límite de peticiones excedido, por favor espera.');
-            } else {
-                console.error('Error en la solicitud:', error.message);
-            }
+            console.error('Error en la solicitud:', error.message);
+            ocultarLoader(); // Ocultar el loader si hay un error
+        });
+};
+
+// Función para filtrar los objetos y asignarles números de página
+const filtrarYAsignarObjetosAPaginas = () => {
+    let objetosFiltrados = [];
+    let idsAsignados = new Set(); // Para rastrear IDs únicos
+
+    // Procesar los IDs para filtrar duplicados por título
+    const promesas = todosIdsObjetos.map(id => procesarObjeto(id));
+
+    Promise.all(promesas)
+        .then(resultados => {
+            // Filtrar resultados únicos por título
+            resultados.forEach(data => {
+                if (data && data.primaryImage && !idsAsignados.has(data.objectID) && !objetosFiltrados.some(obj => obj.title === data.title)) {
+                    objetosFiltrados.push(data);
+                    idsAsignados.add(data.objectID);
+                }
+            });
+
+            // Asignar IDs a las páginas
+            let pagina = 1;
+            let contadorObjetos = 0;
+            objetosFiltrados.forEach((objeto) => {
+                if (!idsPorPagina[pagina]) {
+                    idsPorPagina[pagina] = [];
+                }
+
+                // Asignar ID al número de página
+                idsPorPagina[pagina].push(objeto.objectID);
+                contadorObjetos++;
+
+                // Avanzar a la siguiente página después de llenar 20 elementos
+                if (contadorObjetos === elementosPorPagina) {
+                    pagina++;
+                    contadorObjetos = 0;
+                }
+            });
+
+            console.log('IDs asignados a páginas:', idsPorPagina);
+            cargarObjetosPorPagina(); // Cargar la primera página
+        })
+        .catch(error => {
+            console.error('Error al procesar los objetos:', error.message);
+            ocultarLoader(); // Ocultar el loader si hay un error
         });
 };
 
 // Función para cargar los objetos para la página actual y traducirlos
 const cargarObjetosPorPagina = () => {
-    // Calcular el rango de objetos a cargar para la página actual
-    const indiceInicio = (paginaActual - 1) * elementosPorPagina;
-    const indiceFinal = Math.min(indiceInicio + elementosPorPagina, todosIdsObjetos.length);
-    const idsPaginados = todosIdsObjetos.slice(indiceInicio, indiceFinal);
-    console.log('Ids paginados:', idsPaginados);
+    let objetosUnicos = [];
+    let idsBloque = idsPorPagina[paginaActual] || [];
 
-    // Array para almacenar los objetos cargados
-    const objetosPaginados = [];
+    // Procesar el bloque de IDs asignados a la página actual
+    const promesas = idsBloque.map(id => procesarObjeto(id));
 
-    // Función que procesa cada objeto y lo agrega al array
-    const procesarObjeto = (id) => {
-        return fetch(`${url}/objects/${id}`)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Estado: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.primaryImage) {
-                    objetosPaginados.push(data);
-                }
-            })
-            .catch(error => {
-                console.error('Error en la solicitud del objeto:', error.message);
-            });
-    };
-
-    // Reducir la lista de IDs a promesas usando `map`
-    const promesas = idsPaginados.map(id => procesarObjeto(id));
-
-    // Ejecutar todas las promesas en paralelo
     Promise.all(promesas)
-        .then(() => {
-            // Filtrar objetos duplicados por título
-            const titulosVistos = new Set();
-            let objetosUnicos = objetosPaginados.filter(objeto => {
-                if (titulosVistos.has(objeto.title)) {
-                    return false; // Excluir objetos con títulos duplicados
-                } else {
-                    titulosVistos.add(objeto.title);
-                    return true;
+        .then(resultados => {
+            // Filtrar resultados únicos por título
+            resultados.forEach(data => {
+                if (data && data.primaryImage && !objetosUnicos.some(obj => obj.title === data.title)) {
+                    objetosUnicos.push(data);
                 }
             });
 
-            // Si hay menos de 20 objetos únicos, añadir más objetos para completar la página
-            if (objetosUnicos.length < elementosPorPagina) {
-                // Obtener más IDs que no hayan sido procesados para buscar más objetos
-                const idsRestantes = todosIdsObjetos.filter(id => !idsPaginados.includes(id));
-                const idsAdicionales = idsRestantes.slice(0, elementosPorPagina - objetosUnicos.length);
-
-                // Procesar los objetos adicionales
-                const promesasAdicionales = idsAdicionales.map(id => procesarObjeto(id));
-
-                // Ejecutar todas las promesas adicionales en paralelo
-                Promise.all(promesasAdicionales)
-                    .then(() => {
-                        // Filtrar y añadir objetos únicos adicionales
-                        const objetosAdicionales = objetosPaginados.filter(objeto => !titulosVistos.has(objeto.title));
-                        objetosUnicos = objetosUnicos.concat(objetosAdicionales);
-
-                        // Traducir los campos título, cultura y dinastía de los objetos
-                        traducirObjetos(objetosUnicos);
-                    })
-                    .catch(error => {
-                        console.error('Error al cargar los objetos adicionales:', error.message);
-                    });
-            } else {
-                // Traducir los campos título, cultura y dinastía de los objetos
-                traducirObjetos(objetosUnicos);
-            }
+            console.log('Objetos únicos antes de traducir:', objetosUnicos);
+            traducirObjetos(objetosUnicos.slice(0, elementosPorPagina));
         })
         .catch(error => {
-            console.error('Error al cargar los objetos:', error.message);
+            console.error('Error al cargar el bloque de objetos:', error.message);
+            ocultarLoader(); // Ocultar el loader si hay un error
         });
 };
 
+// Función que procesa cada objeto
+const procesarObjeto = (id) => {
+    return fetch(`${url}/objects/${id}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error HTTP! Estado: ${response.status}`);
+            }
+            return response.json();
+        })
+        .catch(error => {
+            console.error('Error en la solicitud del objeto:', error.message);
+            return null; // Devolver null en caso de error
+        });
+};
 
 // Función para traducir los campos de los objetos
 const traducirObjetos = async (objetos) => {
+    console.log('Objetos a traducir:', objetos);
     const objetosTraducidos = [];
 
     for (const objeto of objetos) {
@@ -196,15 +223,16 @@ const traducirObjetos = async (objetos) => {
             });
         } catch (error) {
             console.error('Error en la traducción:', error);
-            objetosTraducidos.push(objeto); // Incluye el objeto sin traducir en caso de error
+            objetosTraducidos.push(objeto);
         }
     }
 
     // Mostrar los objetos una vez que todos se han traducido
     mostrarObjetos(objetosTraducidos);
-    configurarPaginacion(todosIdsObjetos.length);
-};
 
+    // Configurar la paginación después de mostrar los objetos
+    configurarPaginacion(Object.keys(idsPorPagina).length);
+};
 
 // Función para mostrar los objetos
 const mostrarObjetos = (objetos) => {
@@ -212,7 +240,6 @@ const mostrarObjetos = (objetos) => {
     galeria.innerHTML = '';
 
     objetos.forEach(objeto => {
-        // Imprimir el ID del objeto en la consola
         console.log(`ID del objeto: ${objeto.objectID}, Departamento: ${objeto.department}`);
 
         const tarjeta = document.createElement('div');
@@ -256,6 +283,9 @@ const mostrarObjetos = (objetos) => {
         galeria.appendChild(tarjeta);
     });
 
+    // Ocultar la animación de carga después de que las imágenes se hayan cargado
+    ocultarLoader();
+
     // Inicializar los botones del carrusel
     document.querySelectorAll('.carousel-container').forEach(container => {
         const images = container.querySelectorAll('.carousel-images img');
@@ -285,11 +315,11 @@ const mostrarObjetos = (objetos) => {
 };
 
 // Función para configurar los botones de paginación
-const configurarPaginacion = (totalElementos) => {
-    const totalPaginas = Math.ceil(totalElementos / elementosPorPagina);
+const configurarPaginacion = (totalPaginas) => {
     const paginacionDiv = document.getElementById('paginacion');
     paginacionDiv.innerHTML = '';
 
+    // Crear los botones de paginación
     for (let i = 1; i <= totalPaginas; i++) {
         const boton = document.createElement('button');
         boton.textContent = i;
@@ -297,21 +327,10 @@ const configurarPaginacion = (totalElementos) => {
 
         boton.addEventListener('click', () => {
             paginaActual = i;
-            cargarObjetosPorPagina();
+            mostrarLoader(); // Mostrar la animación de carga al cambiar de página
+            cargarObjetosPorPagina(); // Cargar los objetos para la página seleccionada
         });
 
         paginacionDiv.appendChild(boton);
     }
 };
-
-// Inicializar la carga de departamentos al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
-    cargarDepartamentos();
-
-    // Configurar el botón de búsqueda
-    const btnBuscar = document.getElementById('buscar');
-    btnBuscar.addEventListener('click', () => {
-        paginaActual = 1;
-        buscarObjetos();
-    });
-});

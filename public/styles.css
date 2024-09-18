@@ -76,9 +76,11 @@ h1 {
 
 .tarjeta img {
     width: 100%; 
-    height: auto; 
+    height: 100%;
     border-bottom: 1px solid #333;
     object-fit: cover; /* Mantiene la relación de aspecto */
+    max-height: 40vh; /* Limita la altura de la imagen al 40% del alto de la pantalla */
+    object-fit: contain; /* Ajusta la imagen dentro del contenedor sin recortarla */
 }
 
 
@@ -175,4 +177,23 @@ h1 {
 
 .carousel-button.next {
     right: 10px;
+}
+
+/* CSS para el spinner de carga */
+.loader {
+    border: 8px solid #f3f3f3; /* Light grey */
+    border-top: 8px solid #3498db; /* Blue */
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1s linear infinite;
+    position: fixed; /* Centrar el loader en la pantalla */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
