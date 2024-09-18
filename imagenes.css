@@ -1,0 +1,57 @@
+/* Estilo para el contenedor del carrusel */
+.carrousel-container {
+    width: 60vw; /* 60% del ancho de la ventana del navegador */
+    margin: auto; /* Centrar el contenedor horizontalmente */
+    overflow: hidden; /* Ocultar cualquier parte de las imágenes que se salgan del contenedor */
+    position: relative; /* Para posicionar los botones de navegación */
+}
+
+/* Estilo para las imágenes del carrusel */
+.carrousel-image {
+    width: 100%; /* Ocupa el 100% del ancho del contenedor */
+    height: auto; /* Mantiene la proporción de la imagen */
+    display: block; /* Elimina el espacio en blanco debajo de las imágenes */
+}
+
+/* Estilo para los botones de navegación */
+.carrousel-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo semitransparente para los botones */
+    color: #fff;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 10; /* Asegura que los botones estén por encima de las imágenes */
+}
+
+.carrousel-button.prev {
+    left: 10px; /* Posiciona el botón de "anterior" a la izquierda */
+}
+
+.carrousel-button.next {
+    right: 10px; /* Posiciona el botón de "siguiente" a la derecha */
+}
+
+/* Opcional: Estilo para la navegación de puntos (si usas puntos para navegar) */
+.carrousel-dots {
+    text-align: center;
+    position: absolute;
+    bottom: 10px;
+    width: 100%;
+}
+
+.carrousel-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background-color: #fff;
+    border-radius: 50%;
+    margin: 0 5px;
+    cursor: pointer;
+}
+
+.carrousel-dot.active {
+    background-color: #ff9800; /* Color para el punto activo */
+}

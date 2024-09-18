@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imágenes Adicionales</title>
+    <link rel="stylesheet" href="imagenes.css"> <!-- Asegúrate de que el archivo CSS esté disponible -->
+</head>
+<body>
+    <div class="carrousel-container">
+        <!-- Imagen del carrusel -->
+        <img src="./default_image.jpg" class="carrousel-image" alt="Imagen 1">
+        <img src="./default_image.jpg" class="carrousel-image" alt="Imagen 2">
+        <!-- Botones de navegación -->
+        <button class="carrousel-button prev" onclick="prevSlide()">&#10094;</button>
+        <button class="carrousel-button next" onclick="nextSlide()">&#10095;</button>
+        <!-- Puntos de navegación -->
+        <div class="carrousel-dots">
+            <span class="carrousel-dot active" onclick="currentSlide(1)"></span>
+            <span class="carrousel-dot" onclick="currentSlide(2)"></span>
+            <!-- Agrega más puntos según el número de imágenes -->
+        </div>
+    </div>
+    <a href="index.html" class="close">Cerrar</a> <!-- Botón para cerrar y volver a la página principal -->
+    <script>
+        // Recuperar parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const imagenes = JSON.parse(decodeURIComponent(urlParams.get('imagenes')));
+
+        const carouselImages = document.querySelector('.carousel-images');
+        const prevButton = document.querySelector('.prev');
+        const nextButton = document.querySelector('.next');
+
+        carouselImages.innerHTML = imagenes.map(img => `<img src="${img}" alt="Imagen adicional">`).join('');
+
+        let currentIndex = 0;
+
+        const showImage = index => {
+            carouselImages.style.transform = `translateX(${-index * 100}%)`;
+        };
+
+        prevButton.addEventListener('click', () => {
+            currentIndex = (currentIndex > 0) ? currentIndex - 1 : imagenes.length - 1;
+            showImage(currentIndex);
+        });
+
+        nextButton.addEventListener('click', () => {
+            currentIndex = (currentIndex < imagenes.length - 1) ? currentIndex + 1 : 0;
+            showImage(currentIndex);
+        });
+
+        // Inicializar con la primera imagen
+        showImage(currentIndex);
+    </script>
+</body>
+</html>

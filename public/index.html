@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imágenes del Museo Metropolitano</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>Imágenes del Museo Metropolitano</h1>
+    
+    <div class="filtros">
+        <label for="departamento">Departamento:</label>
+        <select id="departamento">
+            <!--<option value="">Todos</option> -->
+            <!-- Las opciones se cargarán dinámicamente con JavaScript -->
+        </select>
+
+        <label for="palabraClave">Palabra clave:</label>
+        <input type="text" id="palabraClave" placeholder="Escribe una palabra clave">
+
+        <label for="ubicacion">Ubicación:</label>
+        <input type="text" id="ubicacion" placeholder="Escribe una localización">
+        
+        <button id="buscar">Buscar</button>
+    </div>
+
+    <div id="galeria" class="galeria"></div>
+
+    <div id="paginacion" class="paginacion"></div>
+
+    <script src="index.js"></script>
+</body>
+</html>
+
