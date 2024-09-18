@@ -187,13 +187,23 @@ h1 {
     width: 60px;
     height: 60px;
     animation: spin 1s linear infinite;
-    position: fixed; /* Centrar el loader en la pantalla */
+    
+    /* Posicionamiento */
+    position: fixed; /* Fijo para que esté siempre visible */
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
+    
+    /* Asegurar que esté encima */
+    z-index: 9999; /* Un valor alto para asegurar que esté al frente */
+    
+    /* Fondo semitransparente */
+    background-color: rgba(0, 0, 0, 0.5); /* Fondo oscuro semitransparente */
 }
 
+  /* Animación de rotación */
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+
