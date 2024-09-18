@@ -263,8 +263,8 @@ const mostrarObjetos = (objetos) => {
                     ${imagenes.map(img => `<img src="${img}" alt="Imagen adicional">`).join('')}
                 </div>
                 ${imagenes.length > 1 ? `
-                    <button class="carousel-button prev">Anterior</button>
-                    <button class="carousel-button next">Siguiente</button>
+                    <button class="carousel-button prev"><</button>
+                    <button class="carousel-button next">></button>
                 ` : ''}
             </div>
         `;
