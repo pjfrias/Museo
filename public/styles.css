@@ -181,11 +181,11 @@ h1 {
 
 /* CSS para el spinner de carga */
 .loader {
-    border: 8px solid #f3f3f3; /* Light grey */
-    border-top: 8px solid #3498db; /* Blue */
+    border: 6px solid #f3f3f3; /* Light grey */
+    border-top: 6px solid #ff9800;; /* Blue */
     border-radius: 50%;
-    width: 60px;
-    height: 60px;
+    width: 40px;
+    height: 40px;
     animation: spin 1s linear infinite;
     
     /* Posicionamiento */

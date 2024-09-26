@@ -45,6 +45,28 @@ document.addEventListener('DOMContentLoaded', () => {
             btnBuscar.click();
         }
     });
+
+    let filtros = {
+        departamento: '',
+        palabraClave: '',
+        ubicacion: ''
+    };
+
+    const departamentoInput = document.getElementById('departamento');
+    const palabraClaveInput = document.getElementById('palabraClave');
+    const ubicacionInput = document.getElementById('ubicacion');
+
+    // Función que captura el valor del input y lo guarda en el objeto
+    function capturarValor(event) {
+        const input = event.target;
+        filtros[input.id] = input.value;
+        console.log(filtros); // Mostrar los valores capturados en el objeto
+    }
+
+    // Asignar evento blur a los inputs
+    departamentoInput.addEventListener('blur', capturarValor);
+    palabraClaveInput.addEventListener('blur', capturarValor);
+    ubicacionInput.addEventListener('blur', capturarValor);
 });
 
 // Mostrar el loader
@@ -92,6 +114,15 @@ const cargarDepartamentos = () => {
 const buscarObjetos = () => {
     const palabraClave = document.getElementById('palabraClave').value;
     const ubicacion = document.getElementById('ubicacion').value;
+    
+    // Restablecer las variables y limpiar la galería antes de la nueva búsqueda
+    todosIdsObjetos = [];
+    idsPorPagina = {};
+    const galeria = document.getElementById('galeria');
+    galeria.innerHTML = ''; // Limpiar la galería
+    const paginacionDiv = document.getElementById('paginacion');
+    paginacionDiv.innerHTML = ''; // Limpiar la paginación
+    
     let consulta = `${url}/search?departmentId=${Departamento}&hasImages=true`;
 
     if (palabraClave) consulta += `&q=${encodeURIComponent(palabraClave)}`;
@@ -109,6 +140,16 @@ const buscarObjetos = () => {
         .then(datos => {
             // Guardar todos los IDs de objetos en memoria
             todosIdsObjetos = (datos.objectIDs || []).filter(id => id).slice(0, maxElementos);
+
+            // Si no hay resultados, mostrar un mensaje y detener la ejecución
+            if (todosIdsObjetos.length === 0) {
+                const galeria = document.getElementById('galeria');
+                galeria.innerHTML = '<p>No se encontraron resultados para los criterios de búsqueda.</p>';
+                ocultarLoader(); // Ocultar el loader si no hay resultados
+                return; // Detener si no hay resultados
+            }
+
+            // Si hay resultados, continuar con el procesamiento
             filtrarYAsignarObjetosAPaginas(); // Filtrar y asignar los objetos a las páginas
         })
         .catch(error => {
@@ -116,6 +157,8 @@ const buscarObjetos = () => {
             ocultarLoader(); // Ocultar el loader si hay un error
         });
 };
+
+
 
 // Función para filtrar los objetos y asignarles números de página
 const filtrarYAsignarObjetosAPaginas = () => {
