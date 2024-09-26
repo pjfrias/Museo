@@ -95,7 +95,7 @@ const buscarObjetos = () => {
     let consulta = `${url}/search?departmentId=${Departamento}&hasImages=true`;
 
     if (palabraClave) consulta += `&q=${encodeURIComponent(palabraClave)}`;
-    else consulta += `&q=''`;
+    else consulta += `&q=""`;
     if (ubicacion) consulta += `&geoLocation=${encodeURIComponent(ubicacion)}`;
     console.log('Consulta:', consulta);
 
